@@ -1,26 +1,34 @@
-package org.jboss.windup.web.selenium;
+package org.jboss.windup.web.selenium.tests;
 
 import java.awt.AWTException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import junit.framework.TestCase;
-import org.junit.After;
-import org.junit.FixMethodOrder;
-import org.junit.runners.MethodSorters;
+//import junit.framework.TestCase;
+import org.jboss.windup.web.selenium.pages.analyze_project.AnalyzeProject;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+//import org.junit.After;
+//import org.junit.FixMethodOrder;
+//import org.junit.runners.MethodSorters;
 /*
  *Navigate through Project Level static reports from an analysis run of Project Selenium02Test
  */
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class Selenium04Test extends TestCase {
+
+public class Selenium04Test extends TestBase{
 
 	private AnalyzeProject selenium;
 
+	@BeforeEach
 	public void setUp() throws InterruptedException {
 		selenium = new AnalyzeProject();
 	}
 
+	@Test
 	public void test01AppListTabs() throws InterruptedException, AWTException {
 
 		assertEquals("Application List", selenium.headerTitle());
@@ -48,6 +56,7 @@ public class Selenium04Test extends TestCase {
 
 	}
 
+	@Test
 	public void test02AppListFilters() throws AWTException {
 
 		assertEquals("Application List", selenium.headerTitle());
@@ -77,6 +86,7 @@ public class Selenium04Test extends TestCase {
 
 	}
 
+	@Test
 	public void test03AllIssuesReport() throws InterruptedException, AWTException
 	{
 
@@ -99,6 +109,7 @@ public class Selenium04Test extends TestCase {
 		assertFalse(selenium.showRuleVisible());
 	}
 
+	@Test
 	public void test04TechnologiesReport() throws InterruptedException, AWTException {
 
 		test01AppListTabs();
@@ -136,6 +147,7 @@ public class Selenium04Test extends TestCase {
 
 	}
 
+	@Test
 	public void test05DependencyGraph() throws InterruptedException ,AWTException {
 
 		test01AppListTabs();
@@ -146,6 +158,7 @@ public class Selenium04Test extends TestCase {
 		assertEquals("Dependencies Graph", selenium.pageTitle());
 	}
 
+	@Test
 	public void test06Dependencies() throws InterruptedException, AWTException {
 
 		test01AppListTabs();
@@ -166,6 +179,7 @@ public class Selenium04Test extends TestCase {
 		selenium.waitForTabLoad();
 	}
 
+	@Test
 	public void test07AboutLinks() throws InterruptedException, AWTException {
 
 		test01AppListTabs();
@@ -188,6 +202,7 @@ public class Selenium04Test extends TestCase {
 
 	}
 
+	@Test
 	public void test08Feedback() throws InterruptedException, AWTException {
 
 		test01AppListTabs();
@@ -217,10 +232,10 @@ public class Selenium04Test extends TestCase {
 		assertTrue(selenium.popupRemoved("atlwdg-blanket"));
 	}
 
-	@After
+	@AfterEach
 	public void tearDown()
 	{
-		selenium.closeDriver();
+
 	}
 
 }

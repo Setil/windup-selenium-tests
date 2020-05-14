@@ -1,6 +1,11 @@
-package org.jboss.windup.web.selenium;
+package org.jboss.windup.web.selenium.pages.analyze_project;
 
 
+import com.codeborne.selenide.Condition;
+import com.codeborne.selenide.ElementsCollection;
+import com.codeborne.selenide.SelenideElement;
+import com.codeborne.selenide.WebDriverRunner;
+import org.jboss.windup.web.selenium.pages.BasePage;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -10,169 +15,59 @@ import java.awt.AWTException;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.$$;
+
 /**
  * 
  * @author elise
  *
  */
 
-public class AnalyzeProject extends CommonProject {
+public class AnalyzeProject extends BasePage {
+	//locators:
+	private SelenideElement tabs = $(By.cssSelector("ul.nav.navbar-nav"));
+	private SelenideElement feedback = $(By.cssSelector("ul.nav.navbar-nav.navbar-right"));
+	private SelenideElement appList = $(By.cssSelector(".real"));
+	private SelenideElement sorts = $(By.cssSelector("div#sort.form-group"));
+	private SelenideElement filterType = $(By.cssSelector("div#filter-type"));
+	private SelenideElement filter = $(By.cssSelector("div#filter-div.form-group.toolbar-pf-filter"));
+	private SelenideElement search = $(By.cssSelector("input#filter.form-control"));
+	private SelenideElement clear = $(By.cssSelector("a#clear-filters"));
+	private SelenideElement activeFilters = $(By.cssSelector("ul#active-filters"));
 
 	public AnalyzeProject() throws InterruptedException {
         waitForProjectList();
-
 		navigateProject("Selenium02Test");
 		waitForProjectLoad();
 		clickAnalysisReport(2);
-
 		navigateTo(1);
-
 	}
 
-	/**
-	 * returns the current URL of the page May have to wait a few seconds for it to
-	 * properly load
-	 * 
-	 * @return the full URL
-	 */
-	public String checkURL() {
-		return driver.getCurrentUrl();
-	}
-
-	/**
-	 * navigates the driver to a different tab
-	 * 
-	 * @param index
-	 *            starts at 0 (whichever tab to navigate to)
-	 * @throws InterruptedException
-	 */
-	public void navigateTo(int index) throws InterruptedException {
-		ArrayList tabs = new ArrayList(driver.getWindowHandles());
-		if (tabs.size() < 2) {
-			Thread.sleep(1000);
-			navigateTo(index);
-		} else {
-			driver.switchTo().window((String) tabs.get(index));
-			driver.switchTo().defaultContent();
-		}
-	}
-
-	/**
-	 * this switches the tab on the window
-	 * 
-	 * @param index
-	 *            starts at 0
-	 */
 	public void switchTab(int index) {
-		WebElement tabs = driver.findElement(By.cssSelector("ul.nav.navbar-nav"));
-		WebElement tab = tabs.findElement(By.cssSelector("li:nth-child(" + index + ")"));
+		SelenideElement tab = tabs.$(By.cssSelector("li:nth-child(" + index + ")"));
 		tab.click();
-
 		waitForTabLoad();
-
-		WebDriverWait wait = new WebDriverWait(driver,20);
-
-
-		try
-		{
-			tabs = driver.findElement(By.cssSelector("ul.nav.navbar-nav"));
-			wait.until(ExpectedConditions.elementToBeClickable(tabs.findElement(
-					By.cssSelector("li:nth-child(" + index + ")" +
-							".active"))));
-		}
-		catch (org.openqa.selenium.NoSuchElementException e)
-		{
-			System.out.println ("NoSuchElementException exception " +
-						new Object() {}
-								.getClass()
-								.getName() + ":" +
-						new Object() {}
-								.getClass()
-								.getEnclosingMethod().getName() + " " +
-						e.getMessage()
-						);
+		if(tabs.exists()) {
+			SelenideElement childTabs = tabs.$(By.cssSelector("li:nth-child(" + index + ")" + ".active"));
+			childTabs.waitUntil(Condition.enabled, TIMEOUT);
+		} else {
+			System.out.println ("NoSuchElementException exception" + tabs);
 		}
 
 	}
 
-
-	/**
-	 * This will click on the Send Feedback tab on the top right side of the page
-	 * 
-	 * @throws InterruptedException
-	 */
 	public void clickSendFeedback() throws InterruptedException {
-		WebElement feedback = driver.findElement(By.cssSelector("ul.nav.navbar-nav.navbar-right"));
+		feedback.waitUntil(Condition.enabled, TIMEOUT);
 		feedback.click();
 	}
 
-	/**
-	 * can type in deleteAppDialog for the delete box and confirmDialog for save and
-	 * running before the packages are loaded
-	 * 
-	 * @param s
-	 *            the string for the type of dialog box
-	 * @return true if the popup is removed
-	 */
-	public boolean popupRemoved(String s) {
-		try {
-			WebElement dialog = driver.findElement(By.cssSelector("div#" + s + ".modal.fade.in"));
-		} catch (NoSuchElementException e) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * this method will take the driver back to the previous page
-	 */
-	public void goBack() {
-		driver.navigate().back();
-	}
-
-	/**
-	 * this will return the title of the tab
-	 * 
-	 * @return
-	 */
-	public String headerTitle() {
-		return driver.getTitle();
-	}
-
-	/**
-	 * returns the name of the page that the driver is on
-	 * 
-	 * @return
-	 */
-	public String pageTitle() {
-		WebElement title = (new WebDriverWait(driver, 5))
-				.until(ExpectedConditions.elementToBeClickable(
-						By.cssSelector("div.main")));
-		return title.getText();
-	}
-
-	/**
-	 * on the Analysis Results page, this will click the reports button based on the
-	 * index given
-	 * 
-	 * @param index
-	 * @return
-	 */
 	public String clickAnalysisReport(int index) {
-
-		System.out.println (new Object() {}.getClass().getName() + ":" +
-				new Object() {}.getClass().getEnclosingMethod().getName());
-
-		String xpath = "(//*[@class='success'])[" + index + "]";
-		WebElement result = driver.findElement(By.xpath(xpath));
-		xpath = "(//*[@class='pointer link'])[2]";
-		WebElement actions = result.findElement(By.cssSelector("td:nth-child(5)"));
-		WebElement report = actions.findElement(By.cssSelector("a.pointer.link"));
+		SelenideElement result = $(By.xpath("(//*[@class='success'])[" + index + "]"));
+		SelenideElement report = result.$(By.cssSelector("td:nth-child(5)")).$(By.cssSelector("a.pointer.link"));
 		String url = report.getAttribute("href");
 
 		report.click();
-
-		System.out.println("URL:" + url);
 
 		return url;
 	}
@@ -181,43 +76,24 @@ public class AnalyzeProject extends CommonProject {
 	 * *************** SORTING METHODS ***************
 	 */
 
-	/**
-	 * this will collect an arraylist of application objects that will in turn
-	 * collect the name and story point count of each application
-	 * 
-	 * @return the arraylist of application objects
-	 */
 	public ArrayList<Application> listApplications() {
-		WebElement appList = driver.findElement(By.cssSelector(".real"));
 		ArrayList<Application> list = new ArrayList<>();
+		ElementsCollection app = appList.$$(By.xpath("(//*[@class='appInfo pointsShared0]"));
+		for (int i=0; i<app.size();i++){
+			SelenideElement title = app.get(i).$(By.xpath("(//*[@class='fileName'])[" + (i+1) + "]"));
+			SelenideElement storyPoint = app.get(i).$(By.cssSelector("span.points"));
 
-		int x = 1;
-		while (true) {
-			try {
-				WebElement app = appList.findElement(By.xpath("(//*[@class='appInfo pointsShared0'])[" + x + "]"));
-				WebElement title = app.findElement(By.xpath("(//*[@class='fileName'])[" + x + "]"));
-				WebElement storyPoint = app.findElement(By.cssSelector("span.points"));
 				if (title.getText().equals("Archives shared by multiple applications")) {
 					return list;
-				} else if (!app.getAttribute("style").equals("display: none;")) {
+				} else if (!app.get(i).getAttribute("style").equals("display: none;")) {
 					Application a = new Application(title.getText(), storyPoint.getText());
 					list.add(a);
 				}
-				x++;
-			} catch (NoSuchElementException e) {
-				return list;
-			}
 		}
+		return list;
 	}
 
-	/**
-	 * The Status class has a type and output, the type can be warning, success
-	 * danger, and info, which are found from the output's class name.
-	 * 
-	 * @author edixon
-	 *
-	 */
-	class Application {
+	public class Application {
 
 		String name;
 		int storyPoints;
@@ -273,10 +149,6 @@ public class AnalyzeProject extends CommonProject {
 			list.add(a.storyPoints);
 		}
 		return list;
-	}
-
-	public void projectSort() {
-
 	}
 
 	/**
@@ -337,22 +209,20 @@ public class AnalyzeProject extends CommonProject {
 	 * @return true if these params are properly found.
 	 */
 	public boolean sortApplicationList(String sortOrder, boolean ascending) {
-		WebElement sorts = driver.findElement(By.cssSelector("div#sort.form-group"));
 		dropDown(sorts, sortOrder);
-
-		try {
-			WebElement order = driver.findElement(By.cssSelector("span.fa.fa-sort-alpha-asc"));
-			if (ascending == false) {
+		SelenideElement order = $(By.cssSelector("span.fa.fa-sort-alpha-asc"));
+		SelenideElement orderSort = sorts.$(By.cssSelector("span.fa.fa-sort-alpha-desc"));
+		if(order.exists()) {
+			if (!ascending) {
 				order.click();
 			}
 			return true;
-		} catch (NoSuchElementException e) {
-			try {
-				WebElement order = sorts.findElement(By.cssSelector("span.fa.fa-sort-alpha-desc"));
-				if (ascending == true) {
+		} else {
+			if(orderSort.exists()){
+				if (ascending) {
 					order.click();
 				}
-			} catch (NoSuchElementException ex) {
+			} else {
 				return false;
 			}
 		}
@@ -369,16 +239,11 @@ public class AnalyzeProject extends CommonProject {
 	 * @throws AWTException
 	 */
 	public void filterAppList(String filterName, String searchParam) throws AWTException {
-		WebElement filter = driver.findElement(By.cssSelector("div#filter-div.form-group.toolbar-pf-filter"));
 		dropDown(filter, filterName);
-
-		WebElement search = driver.findElement(By.cssSelector("input#filter.form-control"));
-		Actions actions = new Actions(driver);
+		Actions actions = new Actions(WebDriverRunner.getWebDriver());
 		actions.moveToElement(search).click();
 		actions.sendKeys(searchParam).perform();
-
 		filter.submit();
-
 	}
 
 	/**
@@ -390,7 +255,6 @@ public class AnalyzeProject extends CommonProject {
 	 *            the exact string of the relationship to be changed to
 	 */
 	public void changeRelationship(String s) {
-		WebElement filterType = driver.findElement(By.cssSelector("div#filter-type"));
 		dropDown(filterType, s);
 	}
 
@@ -398,31 +262,23 @@ public class AnalyzeProject extends CommonProject {
 	 * this will clear all filters added on the application list page
 	 */
 	public void clearFilters() {
-		WebElement clear = driver.findElement(By.cssSelector("a#clear-filters"));
 		clear.click();
 	}
 
 	/**
 	 * with a given string, this will delete that filter, given that it is there
 	 * 
-	 * @param s
+
 	 *            the exact string of the filter name
 	 * @return true if the filter is found and deleted
 	 */
 	public boolean deleteFilter(String filterType, String filterName) {
-		WebElement activeFilters = driver.findElement(By.cssSelector("ul#active-filters"));
-		int x = 1;
-		while (true) {
-			try {
-				WebElement filter = activeFilters.findElement(By.cssSelector("li:nth-child(" + x + ")"));
-				if (filter.getText().equals(filterType + filterName)) {
-					WebElement delete = filter.findElement(By.cssSelector("span.glyphicon.glyphicon-remove"));
-					delete.click();
-					return true;
-				}
-				x++;
-			} catch (NoSuchElementException e) {
-				break;
+		ElementsCollection filter = activeFilters.$$(By.cssSelector("li:nth-child(n)"));
+		for(int i=0;i<filter.size();i++) {
+			if (filter.get(i).getText().equals(filterType + filterName)) {
+				SelenideElement delete = filter.get(i).$(By.cssSelector("span.glyphicon.glyphicon-remove"));
+				delete.click();
+				return true;
 			}
 		}
 		return false;
@@ -437,21 +293,15 @@ public class AnalyzeProject extends CommonProject {
 	 * @param name
 	 *            is the name to be selected in the dropdown
 	 */
-	private void dropDown(WebElement f, String name) {
-		WebElement dropDown = f.findElement(By.cssSelector("button.btn.btn-default.dropdown-toggle"));
+	private void dropDown(SelenideElement f, String name) {
+		SelenideElement dropDown = f.$(By.cssSelector("button.btn.btn-default.dropdown-toggle"));
 		dropDown.click();
-		WebElement menu = f.findElement(By.className("dropdown-menu"));
-		int x = 1;
-		while (true) {
-			try {
-				WebElement option = menu.findElement(By.cssSelector("li:nth-child(" + x + ")"));
-				if (option.getText().equals(name)) {
-					option.click();
-					break;
-				}
-				x++;
-			} catch (NoSuchElementException e) {
-				break;
+		SelenideElement menu = f.$(By.className("dropdown-menu"));
+		ElementsCollection option = menu.$$(By.cssSelector("li:nth-child(n)"));
+
+		for(int i=0; i < option.size(); i++) {
+			if (option.get(i).getText().equals(name)) {
+				option.get(i).click();
 			}
 		}
 	}
@@ -464,19 +314,12 @@ public class AnalyzeProject extends CommonProject {
 	 */
 	public ArrayList<String> allIssuesReport() {
 		ArrayList<String> list = new ArrayList<>();
-		int x = 1;
-		while (true) {
-			try {
-				WebElement table = driver.findElement(By.cssSelector("table.tablesorter:nth-child(" + x + ")"));
-				WebElement title = table.findElement(By.cssSelector("td:nth-child(1)"));
+		ElementsCollection table = $$(By.cssSelector("table.tablesorter:nth-child(n)"));
+		for(int i=0; i < 0; i++) {
+			SelenideElement title = table.get(i).$(By.cssSelector("td:nth-child(1)"));
 				list.add(title.getText());
-				x++;
-			} catch (NoSuchElementException e) {
-				break;
 			}
-		}
 		return list;
-
 	}
 
 	/**
@@ -490,25 +333,21 @@ public class AnalyzeProject extends CommonProject {
 	 * @return true if the sorts in all issues work
 	 */
 	public boolean sortAllIssues() {
-
+		ElementsCollection table = $$(By.cssSelector("table.tablesorter:nth-child(n)"));
 		Boolean working = false;
-		int x = 1;
 
-		while (true) {
-			try {
-				WebElement table = driver.findElement(By.cssSelector("table.tablesorter:nth-child(" + x + ")"));
-				WebElement title = table.findElement(By.cssSelector("tr.tablesorter-ignoreRow"));
-				WebElement sortRow = table.findElement(By.cssSelector("tr.tablesorter-headerRow"));
-				WebElement body = table.findElement(By.cssSelector("tbody"));
+		for(int i=0; i< table.size(); i++){
+				SelenideElement title = table.get(i).$(By.cssSelector("tr.tablesorter-ignoreRow"));
+				SelenideElement sortRow = table.get(i).$(By.cssSelector("tr.tablesorter-headerRow"));
+				SelenideElement body = table.get(i).$(By.cssSelector("tbody"));
 
 				for (int y = 1; y < 6; y++) {
 
-					WebElement sort = sortRow.findElement(By.cssSelector("th:nth-child(" + y + ")"));
+					SelenideElement sort = sortRow.$(By.cssSelector("th:nth-child(" + y + ")"));
 					String c = sort.getAttribute("class");
 
 					// For Strings
 					if (y == 1) {
-
 						for (int j = 0; j < 2; j++) {
 
 							c = sort.getAttribute("class");
@@ -574,12 +413,7 @@ public class AnalyzeProject extends CommonProject {
 						}
 					}
 				}
-
-				x++;
-			} catch (NoSuchElementException e) {
-				break;
 			}
-		}
 		return working;
 	}
 
@@ -587,25 +421,19 @@ public class AnalyzeProject extends CommonProject {
 	 * this collects the first column of a table on the all issues page. It stores
 	 * the elements in string form given that they should be names
 	 * 
-	 * @param column
+
 	 *            is the current table
 	 * @return an arrayList of strings holding all the names
 	 */
-	private ArrayList<String> collectBody(WebElement table) {
+	private ArrayList<String> collectBody(SelenideElement table) {
 		ArrayList<String> list = new ArrayList<>();
-		int x = 1;
-		while (true) {
-			try {
-				WebElement file = table.findElement(By.cssSelector("tr:nth-child(" + x + ")"));
-				WebElement attribute = file.findElement(By.cssSelector("td:nth-child(1)"));
+		ElementsCollection file = table.$$(By.cssSelector("tr:nth-child(odd)"));
+		for (int i = 0; i < file.size(); i++) {
+			SelenideElement attribute = file.get(i).$(By.cssSelector("td:nth-child(1)"));
+			if (attribute.exists()) {
 				list.add(attribute.getText().toLowerCase());
-
-				x += 2;
-			} catch (NoSuchElementException e) {
-				break;
 			}
 		}
-
 		return list;
 	}
 
@@ -619,18 +447,19 @@ public class AnalyzeProject extends CommonProject {
 	 *            is the column number to search (starts at 1)
 	 * @return an arraylist of integers representing the column
 	 */
-	private ArrayList<Integer> collectBody(WebElement table, int column) {
+	private ArrayList<Integer> collectBody(SelenideElement table, int column) {
 		ArrayList<Integer> list = new ArrayList<>();
 
 		int x = 1;
 		while (true) {
-			try {
-				WebElement file = table.findElement(By.cssSelector("tr:nth-child(" + x + ")"));
-				WebElement attribute = file.findElement(By.cssSelector("td:nth-child(" + column + ")"));
+			SelenideElement file = table.$(By.cssSelector("tr:nth-child(" + x + ")"));
+			SelenideElement attribute = file.$(By.cssSelector("td:nth-child(" + column + ")"));
+
+			if(attribute.exists()) {
 				list.add(Integer.valueOf(attribute.getText()));
 
 				x += 2;
-			} catch (NoSuchElementException e) {
+			} else {
 				break;
 			}
 		}
@@ -678,7 +507,6 @@ public class AnalyzeProject extends CommonProject {
 	 * @return an arraylsist of sorted strings
 	 */
 	private ArrayList<String> sortStringDesc(ArrayList<String> list) {
-
 		ArrayList<String> sorted = list;
 		Collections.sort(sorted, Collections.reverseOrder());
 		return sorted;
@@ -710,49 +538,38 @@ public class AnalyzeProject extends CommonProject {
 	 * @return true if the expansion of the first issue is complete
 	 */
 	public boolean clickFirstIssue() throws InterruptedException{
-		WebElement table = driver.findElement(By.cssSelector("table.tablesorter:nth-child(1)"));
-		WebElement body = table.findElement(By.cssSelector("tbody"));
-		WebElement issue = body.findElement(By.cssSelector("tr:nth-child(1)"));
+		SelenideElement table = $(By.cssSelector("table.tablesorter:nth-child(1)"));//TODO вынести локаторы
+		SelenideElement body = table.$(By.cssSelector("tbody"));
+		SelenideElement issue = body.$(By.cssSelector("tr:nth-child(1)"));
+		SelenideElement tIncidents = issue.$(By.cssSelector("td:nth-child(2)"));
+		SelenideElement link = $(By.cssSelector("table.tablesorter:nth-child(1) " +
+				"tbody " + "a.toggle"));
+		SelenideElement fileExpanded = body.$(By.cssSelector("tr:nth-child(2)"));
 
-		WebElement tIncidents = issue.findElement(By.cssSelector("td:nth-child(2)"));
 		int totalIncidents = Integer.valueOf(tIncidents.getText());
 
-		WebDriverWait wait = new WebDriverWait(driver, 10);
-		wait.until(
-				ExpectedConditions.elementToBeClickable(
-						By.cssSelector("table.tablesorter:nth-child(1) " +
-								"tbody " + "a.toggle"))
-		);
-
-		WebElement link = driver.findElement(By.cssSelector("table.tablesorter:nth-child(1) " +
-				"tbody " + "a.toggle"));
-
-		Thread.sleep(2000);
-
-		JavascriptExecutor jse2 = (JavascriptExecutor)driver;
+		link.waitUntil(Condition.enabled, TIMEOUT);
+		JavascriptExecutor jse2 = (JavascriptExecutor)WebDriverRunner.getWebDriver();
 		jse2.executeScript("arguments[0].click()", link);
 
-		WebElement fileExpanded = body.findElement(By.cssSelector("tr:nth-child(2)"));
-		body = fileExpanded.findElement(By.cssSelector("tbody"));
+		body = fileExpanded.$(By.cssSelector("tbody"));
 		int total = 0;
 		int x = 1;
 		while (true) {
 			try {
-				// TODO: fix this sleep in a better way
-				Thread.sleep(5000);
-				wait.until(ExpectedConditions.visibilityOf(body.findElement(By.cssSelector("tr:nth-child(" + x + ")"))));
-				WebElement file = body.findElement(By.cssSelector("tr:nth-child(" + x + ")"));
-				WebElement incident = file.findElement(By.cssSelector("td.text-right"));
-				total += Integer.valueOf(incident.getText());
+				SelenideElement file = body.$(By.cssSelector("tr:nth-child(" + x + ")"));
+				SelenideElement incident = file.$(By.cssSelector("td.text-right"));
 
+				file.waitUntil(Condition.visible, TIMEOUT);
+				total += Integer.valueOf(incident.getText());
 				if (x == 1) {
-					WebElement textBox = file.findElement(By.cssSelector("div.panel.panel-default.hint-detail-panel"));
+					SelenideElement textBox = file.$(By.cssSelector("div.panel.panel-default.hint-detail-panel"));
 
 					if (!textBox.getCssValue("background-color").equals("rgba" +
 							"(255, 252, 220, 1)")) {
 						return false;
 					}
-					WebElement showRule = file.findElement(By.cssSelector("a.sh_url"));
+					SelenideElement showRule = file.$(By.cssSelector("a.sh_url"));
 				}
 				x++;
 			} catch (NoSuchElementException e) {
@@ -773,12 +590,12 @@ public class AnalyzeProject extends CommonProject {
 	 * the "Show Rule" hyperlink and check it. this should redirect to a new page.
 	 */
 	public void clickShowRule() {
-		WebElement table = driver.findElement(By.cssSelector("table.tablesorter:nth-child(1)"));
-		WebElement body = table.findElement(By.cssSelector("tbody"));
-		WebElement fileExpanded = body.findElement(By.cssSelector("tr:nth-child(2)"));
-		body = fileExpanded.findElement(By.cssSelector("tbody"));
-		WebElement showRule = body.findElement(By.cssSelector("a.sh_url"));
-		JavascriptExecutor jse2 = (JavascriptExecutor)driver;
+		SelenideElement table = $(By.cssSelector("table.tablesorter:nth-child(1)"));
+		SelenideElement body = table.$(By.cssSelector("tbody"));
+		SelenideElement fileExpanded = body.$(By.cssSelector("tr:nth-child(2)"));
+		body = fileExpanded.$(By.cssSelector("tbody"));
+		SelenideElement showRule = body.$(By.cssSelector("a.sh_url"));
+		JavascriptExecutor jse2 = (JavascriptExecutor)WebDriverRunner.getWebDriver();
 		jse2.executeScript("arguments[0].click()", showRule);
 	}
 
@@ -788,9 +605,9 @@ public class AnalyzeProject extends CommonProject {
 	 * @return true if it is displayed
 	 */
 	public boolean showRuleVisible() {
-		WebElement table = driver.findElement(By.cssSelector("table.tablesorter:nth-child(1)"));
-		WebElement body = table.findElement(By.cssSelector("tbody"));
-		WebElement fileExpanded = body.findElement(By.xpath("/html/body/div[2]/div[2]/div/table[1]/tbody/tr[2]/td"));
+		SelenideElement table = $(By.cssSelector("table.tablesorter:nth-child(1)"));
+		SelenideElement body = table.$(By.cssSelector("tbody"));
+		SelenideElement fileExpanded = body.$(By.xpath("/html/body/div[2]/div[2]/div/table[1]/tbody/tr[2]/td"));
 		return fileExpanded.isDisplayed();
 	}
 
@@ -805,7 +622,7 @@ public class AnalyzeProject extends CommonProject {
 		System.out.println (new Object() {}.getClass().getName() + ":" +
 							new Object() {}.getClass().getEnclosingMethod().getName());
 
-		WebElement toggle = driver.findElement(By.cssSelector("td.sector:nth-child(1)"));
+		SelenideElement toggle = $(By.cssSelector("td.sector:nth-child(1)"));
 
 		// Ascending
 		ArrayList<String> hold = collectAppName();
@@ -826,14 +643,14 @@ public class AnalyzeProject extends CommonProject {
 
 	public ArrayList<String> collectAppName() {
 
-		WebElement body = driver.findElement(By.cssSelector("tbody"));
+		SelenideElement body = $(By.cssSelector("tbody"));
 
 		int x = 1;
 		ArrayList<String> apps = new ArrayList<>();
 		while (true) {
 			try {
-				WebElement app = body.findElement(By.cssSelector("tr.app:nth-child(" + x + ")"));
-				WebElement name = app.findElement(By.cssSelector("td.name"));
+				SelenideElement app = body.$(By.cssSelector("tr.app:nth-child(" + x + ")"));
+				SelenideElement name = app.$(By.cssSelector("td.name"));
 				apps.add(name.getText());
 				x++;
 			} catch (NoSuchElementException e) {
@@ -848,15 +665,15 @@ public class AnalyzeProject extends CommonProject {
 		int x = 1;
 		while (true) {
 			try {
-				WebElement app = driver.findElement(By.cssSelector("tr.app:nth-child(" + x + ")"));
-				WebElement circle = app.findElement(By.cssSelector("td.circle:nth-child(" + index + ")"));
+				SelenideElement app = $(By.cssSelector("tr.app:nth-child(" + x + ")"));
+				SelenideElement circle = app.$(By.cssSelector("td.circle:nth-child(" + index + ")"));
 				int c = Integer.parseInt(circle.getAttribute("data-count"));
 				collectedCol.add(c);
 				x++;
 			} catch (NoSuchElementException e) {
 				try {
-					WebElement app = driver.findElement(By.cssSelector("tr.app:nth-child(" + x + ")"));
-					WebElement num = app.findElement(By.cssSelector("td.sectorStats:nth-child(" + index + ")"));
+					SelenideElement app = $(By.cssSelector("tr.app:nth-child(" + x + ")"));
+					SelenideElement num = app.$(By.cssSelector("td.sectorStats:nth-child(" + index + ")"));
 					int c = Integer.parseInt(num.getAttribute("data-count"));
 					collectedCol.add(c);
 					x++;
@@ -873,8 +690,8 @@ public class AnalyzeProject extends CommonProject {
 		int x = 2;
 		while (true) {
 			try {
-				WebElement app = driver.findElement(By.cssSelector("tr.app:nth-child(" + index + ")"));
-				WebElement circle = app.findElement(By.cssSelector("td.circle:nth-child(" + x + ")"));
+				SelenideElement app = $(By.cssSelector("tr.app:nth-child(" + index + ")"));
+				SelenideElement circle = app.$(By.cssSelector("td.circle:nth-child(" + x + ")"));
 				int c = Integer.parseInt(circle.getAttribute("data-count"));
 				appList.add(c);
 				x++;
@@ -896,7 +713,7 @@ public class AnalyzeProject extends CommonProject {
 				"persistence", "clustering", "logging", "security", "test", "transactions", "3rd-party",
 				"integration", "ioc", "processing", "rules&processes"};
 		String s = "div.box.box-techbox:" + names[1];
-		WebElement mvc = driver.findElement(By.cssSelector(s));
+		SelenideElement mvc = $(By.cssSelector(s));
 		System.out.println(mvc);
 
 	}
@@ -907,8 +724,8 @@ public class AnalyzeProject extends CommonProject {
 		System.out.println (new Object() {}.getClass().getName() + ":" +
 				new Object() {}.getClass().getEnclosingMethod().getName());
 
-		WebElement header = driver.findElement(By.cssSelector("thead"));
-		WebElement body = driver.findElement(By.cssSelector("tbody"));
+		SelenideElement header = $(By.cssSelector("thead"));
+		SelenideElement body = $(By.cssSelector("tbody"));
 
 		ArrayList<Integer> col;
 		ArrayList<Integer> sorted;
@@ -917,7 +734,7 @@ public class AnalyzeProject extends CommonProject {
 		int x = 2;
 		while (true) {
 			try {
-				WebElement top = header.findElement(By.cssSelector("td.sector:nth-child(" + x + ")"));
+				SelenideElement top = header.$(By.cssSelector("td.sector:nth-child(" + x + ")"));
 				// descending
 				top.click();
 				col = collectColumn(x);
@@ -948,17 +765,16 @@ public class AnalyzeProject extends CommonProject {
 	 * @throws InterruptedException
 	 */
 	public boolean clickTechApp() throws InterruptedException {
-
-		WebElement body = (new WebDriverWait(driver, 5))
-				.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("tbody")));
-		WebElement app = body.findElement(By.cssSelector("tr.app:nth-child(1)"));
-		WebElement name = app.findElement(By.cssSelector("a"));
+		//TODO вынести локаторы
+		SelenideElement body = $(By.cssSelector("tbody"));
+		body.waitUntil(Condition.exist, TIMEOUT);
+		SelenideElement app = body.$(By.cssSelector("tr.app:nth-child(1)"));
+		SelenideElement name = app.$(By.cssSelector("a"));
 		String asdf = name.getText();
 		name.click();
-
-		WebElement header = (new WebDriverWait(driver, 5)).until(
-				ExpectedConditions.presenceOfElementLocated(By.cssSelector("div.page-header.page-header-no-border")));
-		WebElement title = header.findElement(By.cssSelector("div.path"));
+		SelenideElement header = $(By.cssSelector("div.page-header.page-header-no-border"));
+		header.waitUntil(Condition.exist, TIMEOUT);
+		SelenideElement title = header.$(By.cssSelector("div.path"));
 		if (title.getText().equals(asdf))
 			return true;
 		return false;
@@ -972,16 +788,16 @@ public class AnalyzeProject extends CommonProject {
 	 * @return
 	 */
 	public String clickMavenCoord() {
-		WebElement dependencies = driver.findElement(By.className("dependencies"));
+		SelenideElement dependencies = $(By.className("dependencies"));
 		int x = 1;
 		while (true) {
 			try {
-				WebElement dep = dependencies.findElement(By.cssSelector("div.panel:nth-child(" + x + ")"));
-				WebElement firstTrait = dep.findElement(By.cssSelector("dt:nth-child(1)"));
+				SelenideElement dep = dependencies.$(By.cssSelector("div.panel:nth-child(" + x + ")"));
+				SelenideElement firstTrait = dep.$(By.cssSelector("dt:nth-child(1)"));
 				if (firstTrait.getText().equals("Maven coordinates:")) {
-					WebElement hash = dep.findElement(By.cssSelector("dd:nth-child(2)"));
+					SelenideElement hash = dep.$(By.cssSelector("dd:nth-child(2)"));
 					String shaHash = hash.getText();
-					WebElement link = dep.findElement(By.cssSelector("a"));
+					SelenideElement link = dep.$(By.cssSelector("a"));
 					link.click();
 					return shaHash;
 				}
@@ -1004,9 +820,9 @@ public class AnalyzeProject extends CommonProject {
 	 * @throws AWTException
 	 */
 	public boolean mavenSearch(String hash) throws AWTException {
-		WebElement search = (new WebDriverWait(driver, 20))
-				.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input#mat-input-0")));
-		//WebElement search = driver.findElement(By.cssSelector("input#mat-input-0"));
+		// TODO вынести локатор
+		SelenideElement search = $(By.cssSelector("input#mat-input-0"));
+		search.waitUntil(Condition.exist, TIMEOUT);
 		String s = search.getAttribute("value");
 		return s.equals(hash);
 	}
@@ -1018,18 +834,18 @@ public class AnalyzeProject extends CommonProject {
 	 * @return an arraylist of links
 	 */
 	public ArrayList<String> getAboutLinks() {
-		WebElement body = driver.findElement(By.cssSelector("div.panel-body"));
+		SelenideElement body = $(By.cssSelector("div.panel-body"));
 		ArrayList<String> links = new ArrayList<>();
 
 		for (int x = 4; x < 19; x += 2) {
-			WebElement link;
+			SelenideElement link;
 			if (x > 8) {
 				link = body
-						.findElement(By.cssSelector("dl.dl-horizontal:nth-child(2) > dd:nth-child(" + (x - 8) + ")"));
+						.$(By.cssSelector("dl.dl-horizontal:nth-child(2) > dd:nth-child(" + (x - 8) + ")"));
 			} else {
-				link = body.findElement(By.cssSelector("dd:nth-child(" + x + ")"));
+				link = body.$(By.cssSelector("dd:nth-child(" + x + ")"));
 			}
-			WebElement l = link.findElement(By.cssSelector("a"));
+			SelenideElement l = link.$(By.cssSelector("a"));
 			String href = l.getAttribute("href");
 			links.add(href);
 		}
@@ -1042,11 +858,11 @@ public class AnalyzeProject extends CommonProject {
 	 * @throws InterruptedException
 	 */
 	public void closeFeedback() throws InterruptedException {
-		WebElement dialogue = driver.findElement(By.cssSelector("iframe#atlwdg-frame"));
-		driver.switchTo().frame(dialogue);
+		SelenideElement dialogue =$(By.cssSelector("iframe#atlwdg-frame"));
+		WebDriverRunner.getWebDriver().switchTo().frame(dialogue); //TODO вынести локаторы
 
-		WebElement cancel = (new WebDriverWait(driver, 5))
-				.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a.cancel")));
+		SelenideElement cancel = $(By.cssSelector("a.cancel"));
+		cancel.waitUntil(Condition.exist, TIMEOUT);
 		cancel.click();
 
 		navigateTo(1);
@@ -1056,9 +872,9 @@ public class AnalyzeProject extends CommonProject {
 	 * this will have the driver switch to the send feedback frame of the page
 	 */
 	public void moveToFeedback() {
-		WebElement dialogue = (new WebDriverWait(driver, 20))
-				.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("iframe#atlwdg-frame")));
-		driver.switchTo().frame(dialogue);
+		SelenideElement dialogue = $(By.cssSelector("iframe#atlwdg-frame")); // TODO вынести локаторы
+		dialogue.waitUntil(Condition.exist, TIMEOUT);
+		WebDriverRunner.getWebDriver().switchTo().frame(dialogue);
 	}
 
 	/**
@@ -1070,15 +886,12 @@ public class AnalyzeProject extends CommonProject {
 	 *            "good", "meh", "bad", "horrible"
 	 */
 	public void selectFeedbackButton(String rating) {
-		WebElement ratings = (new WebDriverWait(driver, 10))
-				.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("div#feedback-rating")));
+		SelenideElement ratings = $(By.cssSelector("div#feedback-rating"));
+		ratings.waitUntil(Condition.exist, TIMEOUT);
 		for (int x = 1; x < 6; x++) {
-			try {
-				WebElement button = ratings.findElement(By.cssSelector("input#rating-" + rating));
+			SelenideElement button = ratings.$(By.cssSelector("input#rating-" + rating));
+			if(button.isDisplayed()) {
 				button.click();
-
-			} catch (NoSuchElementException e) {
-
 			}
 		}
 	}
@@ -1092,13 +905,11 @@ public class AnalyzeProject extends CommonProject {
 	 * @return true if the param and the radio button match
 	 */
 	public boolean checkFeedbackButton(String rating) {
-		WebElement ratings = driver.findElement(By.cssSelector("div#feedback-rating"));
+		SelenideElement ratings = $(By.cssSelector("div#feedback-rating"));
 		for (int x = 1; x < 6; x++) {
-			try {
-				WebElement button = ratings.findElement(By.cssSelector("input#rating-" + rating));
+			SelenideElement button = ratings.$(By.cssSelector("input#rating-" + rating));
+			if(button.isDisplayed()) {
 				return button.isSelected();
-			} catch (NoSuchElementException e) {
-
 			}
 		}
 		return false;
@@ -1115,10 +926,10 @@ public class AnalyzeProject extends CommonProject {
 		// WebElement like = (new WebDriverWait(driver,
 		// 15)).until(ExpectedConditions.presenceOfElementLocated(
 		// By.cssSelector("(//*[@id='desc-group'])[1]")));
-		WebElement like = driver.findElement(By.xpath("(//*[@id='desc-group'])[1]"));
-		WebElement likeError = like.findElement(By.cssSelector("div.error"));
-		WebElement improve = driver.findElement(By.xpath("(//*[@id='desc-group'])[2]"));
-		WebElement improveError = improve.findElement(By.cssSelector("div.error"));
+		SelenideElement like = $(By.xpath("(//*[@id='desc-group'])[1]"));
+		SelenideElement likeError = like.$(By.cssSelector("div.error"));
+		SelenideElement improve = $(By.xpath("(//*[@id='desc-group'])[2]"));
+		SelenideElement improveError = improve.$(By.cssSelector("div.error"));
 
 		String lError = likeError.getText();
 		String iError = improveError.getText();
@@ -1134,12 +945,12 @@ public class AnalyzeProject extends CommonProject {
 	 * Ipsum"
 	 */
 	public void populateTextBox() {
-		WebElement like = driver.findElement(By.xpath("(//*[@id='desc-group'])[1]"));
-		WebElement likeTextArea = like.findElement(By.cssSelector("textarea#description-good"));
+		SelenideElement like = $(By.xpath("(//*[@id='desc-group'])[1]")); //TODO вынести локаторы
+		SelenideElement likeTextArea = like.$(By.cssSelector("textarea#description-good"));
 		likeTextArea.sendKeys("Lorem Ipsum");
 
-		WebElement improve = driver.findElement(By.xpath("(//*[@id='desc-group'])[2]"));
-		WebElement improveTextArea = improve.findElement(By.cssSelector("textarea#description-bad"));
+		SelenideElement improve = $(By.xpath("(//*[@id='desc-group'])[2]"));
+		SelenideElement improveTextArea = improve.$(By.cssSelector("textarea#description-bad"));
 		improveTextArea.sendKeys("Lorem Ipsum");
 	}
 
@@ -1150,7 +961,7 @@ public class AnalyzeProject extends CommonProject {
 	 *            is the path/to/file of the screenshot needed
 	 */
 	public void feedbackAttachFile(String path) {
-		WebElement browse = driver.findElement(By.cssSelector("input#screenshot.file"));
+		SelenideElement browse = $(By.cssSelector("input#screenshot.file"));
 		browse.sendKeys(path);
 	}
 
@@ -1159,7 +970,7 @@ public class AnalyzeProject extends CommonProject {
 	 * environment" radiobutton and select it.
 	 */
 	public void feedbackIncludeCheck() {
-		WebElement radioButton = driver.findElement(By.cssSelector("input#recordWebInfoConsent"));
+		SelenideElement radioButton = $(By.cssSelector("input#recordWebInfoConsent"));
 		radioButton.click();
 	}
 
@@ -1169,8 +980,8 @@ public class AnalyzeProject extends CommonProject {
 	 * @param name
 	 */
 	public void feedbackPopulateName(String name) {
-		WebElement nameDiv = driver.findElement(By.cssSelector("div#name-group"));
-		WebElement input = nameDiv.findElement(By.cssSelector("input#fullname.text"));
+		SelenideElement nameDiv = $(By.cssSelector("div#name-group")); //TODO вынести локаторы
+		SelenideElement input = nameDiv.$(By.cssSelector("input#fullname.text"));
 		input.sendKeys(name);
 	}
 
@@ -1180,8 +991,8 @@ public class AnalyzeProject extends CommonProject {
 	 * @param email
 	 */
 	public void feedbackPopulateEmail(String email) {
-		WebElement emailDiv = driver.findElement(By.cssSelector("div#email-group"));
-		WebElement input = emailDiv.findElement(By.cssSelector("input#email.text"));
+		SelenideElement emailDiv = $(By.cssSelector("div#email-group"));//TODO вынести локаторы
+		SelenideElement input = emailDiv.$(By.cssSelector("input#email.text"));
 		input.sendKeys(email);
 	}
 
@@ -1189,14 +1000,14 @@ public class AnalyzeProject extends CommonProject {
 	 * this finds the yes or confirm button of the popup and clicks it
 	 */
 	public void submitFeedback() {
-		WebElement modalYes = (new WebDriverWait(driver, 5)).until(ExpectedConditions
-				.presenceOfElementLocated(By.cssSelector("input.aui-button.aui-button-primary.submit-button")));
+		SelenideElement modalYes = $(By.cssSelector("input.aui-button.aui-button-primary.submit-button")); //TODO вынести локаторы
+		modalYes.waitUntil(Condition.exist, TIMEOUT);
 		modalYes.click();
 	}
 
 	public void waitForTabLoad()
 	{
-		WebDriverWait wait = new WebDriverWait(driver, 30);
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("ul.nav.navbar-nav li.active")));
+		SelenideElement navbra = $(By.cssSelector("ul.nav.navbar-nav li.active")); //TODO вынести локаторы
+		navbra.waitUntil(Condition.exist, TIMEOUT);
 	}
 }
